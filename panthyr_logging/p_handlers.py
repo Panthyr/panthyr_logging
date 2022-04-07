@@ -13,7 +13,19 @@ import smtplib
 
 class buffered_SMTP_Handler(logging.handlers.BufferingHandler):
 
-    def __init__(self, host, password, fromaddress, toaddress, station_id):
+    def __init__(
+        self, host: str, password: str, fromaddress: str, toaddress: str,
+        station_id: str,
+    ):
+        """Set up the email handler.
+
+        Args:
+            host (str): server hostname
+            password (str): email password
+            fromaddress (str): sender address
+            toaddress (str): recipient address
+            station_id (str): identifier for the Panthyr station, used in header
+        """
         logging.handlers.BufferingHandler.__init__(self, 50)
         self.host = host
         self.port = 587
@@ -24,13 +36,19 @@ class buffered_SMTP_Handler(logging.handlers.BufferingHandler):
         # strip spaces from toaddress, then put different recipients in list
         self.subject = f'[{self.station_id.upper()}] Error log send by PANTHYR'
 
-    def flush(self):
+    def flush(self) -> None:
+        """Send email with log messages.
+
+        Get all CRITICAL logs from the logging buffer and add them to the email body.
+        Send the email to recipient.
+        """
         if len(self.buffer) == 0:
             return
-        connection = smtplib.SMTP(host=self.host, timeout=10)
 
         mailheader = 'From: {}\r\nTo: {}\r\nSubject: {}\r\n\r\n'.format(
-            self.fromaddress, ','.join(self.toaddress), self.subject,
+            self.fromaddress,
+            ','.join(self.toaddress),
+            self.subject,
         )
         mailbody = ''
         criticalbody = ''
@@ -41,6 +59,7 @@ class buffered_SMTP_Handler(logging.handlers.BufferingHandler):
             if self.format(log)[:8] == 'CRITICAL':
                 criticalbody += '{}\r\n'.format(self.format(log))
 
+        connection = smtplib.SMTP(host=self.host, timeout=10)
         connection.starttls()
         connection.login(self.fromaddress, self.password)
         connection.sendmail(self.fromaddress, self.toaddress, mailheader + mailbody)
@@ -51,3 +70,44 @@ class buffered_SMTP_Handler(logging.handlers.BufferingHandler):
         connection.quit()
 
         super(buffered_SMTP_Handler, self).flush()
+
+
+class db_Handler(logging.Handler):
+
+    def __init__(self, db):
+        """Add a handler to add logs to the database.
+
+        Args:
+            db (_type_): Panthyr database to add logs to. Requires add_log method.
+        """
+        logging.Handler.__init__(self)
+        self.db = db
+
+    def emit(self, record: logging.LogRecord):
+        """Add records to database.
+
+        Args:
+            record (logging.LogRecord): logging record to add to db.
+        """
+        db_level = record.levelname  # log level
+        db_source = f'{record.module}.{record.funcName}({record.lineno})'
+        db_log = record.msg  # the log text
+        if record.exc_info:  # an exception was thrown, log additional data such as traceback
+            import traceback
+            tb = traceback.format_list(
+                traceback.extract_tb(
+                record.exc_info[2],
+                ),
+            )  # get the traceback as string
+            # process the string to make it shorter/neater
+            tb = tb[0][7:-1].replace(
+                '/home/hypermaq/scripts',
+                '.',
+            )  # shorten pad + get rid of ' File' and newline at the end
+            tb = tb.replace('  ', ' ')  # remove double spaces
+            tb = tb.replace('\n  ', '\n')  # remove whitespace after newline
+            db_log = 'EXC {0} | {1[0]} | {1[1]} |{2}'.format(
+                db_log, record.exc_info, tb,
+            )  # combine everything, start with EXC
+
+        self.db.add_log(db_log, db_source, db_level)
