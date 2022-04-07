@@ -38,6 +38,7 @@ def setup_logging(email: bool = False, to_db: bool = True) -> logging.Logger:
         try:
             from panthyr_db.p_db import pDB
             db = pDB()
+
         except Exception as e:
             print(f'exception: {e}')
             return log
