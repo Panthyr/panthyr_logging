@@ -5,3 +5,5 @@ __author__ = 'Dieter Vansteenwegen'
 __email__ = 'dieter.vansteenwegen@vliz.be'
 __project__ = 'Panthyr'
 __project_link__ = 'https://waterhypernet.org/equipment/'
+
+from .p_logging import setup_logging

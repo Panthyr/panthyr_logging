@@ -6,7 +6,7 @@ __email__ = 'dieter.vansteenwegen@vliz.be'
 __project__ = 'Panthyr'
 __project_link__ = 'https://waterhypernet.org/equipment/'
 import logging
-import logging.handlers
+# import logging.handlers
 
 FMT = '%(asctime)s |%(levelname)-7s |%(module)-10.10s|%(lineno)-03s |%(funcName)s |%(message)s'
 DATEFMT = '%d/%m/%Y %H:%M:%S'  # defines format for timestamp
@@ -70,8 +70,8 @@ def setup_email(log: logging.Logger, db) -> logging.Logger:
     from .p_handlers import buffered_SMTP_Handler
     try:
         if db.get_setting('email_enabled') == 1:
-            from panthyr_credentials import Credentials
-            cred = Credentials()
+            from panthyr_credentials.p_credentials import pCredentials
+            cred = pCredentials()
             server_port = cred.get_cred('email_server_port')
             user = cred.get_cred('email_user')
             password = cred.get_cred('email_password')
