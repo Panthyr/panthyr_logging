@@ -6,5 +6,17 @@ Example code:
 
 .. code:: python
 
-    >>> from panthyr_logging import setup_logging
-    >>> log = setup_logging(email=False, to_db = True)
+    >>> import panthyr_logging.p_logging
+    # get the root logger (don't supply module name)
+    >>> log = panthyr_logging.p_logging.setup_logger()
+    # add the rotating file handler
+    >>> panthyr_logging.p_logging.add_rotating_file_handler(log)
+
+    # create database object for next handlers:
+    >>> from panthyr_db.p_db import pDB
+    >>> db = pDB('/home/hypermaq/data/hypermaq.db')
+
+    # add the email handler (after instanciating the panthyr database as db)
+    >>> panthyr_logging.p_logging.add_email_handler(log, db)
+    # add the database handler (after instanciating the panthyr database as db)
+    >>> panthyr_logging.p_logging.add_database_handler(log, db)
