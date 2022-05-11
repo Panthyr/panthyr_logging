@@ -98,11 +98,7 @@ class db_Handler(logging.Handler):
         db_log = record.msg  # the log text
         if record.exc_info:  # an exception was thrown, log additional data such as traceback
             clean_tb = self._cleaned_traceback(record)
-            db_log = 'EXC {0} | {1[0]} | {1[1]} |{2}'.format(
-                db_log,
-                record.exc_info,
-                clean_tb,
-            )  # combine everything, start with EXC
+            db_log = f'EXCEPTION:{db_log}, TYPE/VALUE:{record.exc_info[1]}, TRACEBACK:{clean_tb}'
 
         self.db.add_log(db_log, db_source, db_level)
 
