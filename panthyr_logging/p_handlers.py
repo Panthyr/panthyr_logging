@@ -14,7 +14,11 @@ import smtplib
 class buffered_SMTP_Handler(logging.handlers.BufferingHandler):
 
     def __init__(
-        self, host: str, password: str, fromaddress: str, toaddress: str,
+        self,
+        host: str,
+        password: str,
+        fromaddress: str,
+        toaddress: str,
         station_id: str,
     ):
         """Set up the email handler.
@@ -93,21 +97,41 @@ class db_Handler(logging.Handler):
         db_source = f'{record.module}.{record.funcName}({record.lineno})'
         db_log = record.msg  # the log text
         if record.exc_info:  # an exception was thrown, log additional data such as traceback
-            import traceback
-            tb = traceback.format_list(
-                traceback.extract_tb(
-                record.exc_info[2],
-                ),
-            )  # get the traceback as string
-            # process the string to make it shorter/neater
-            tb = tb[0][7:-1].replace(
-                '/home/hypermaq/scripts',
-                '.',
-            )  # shorten pad + get rid of ' File' and newline at the end
-            tb = tb.replace('  ', ' ')  # remove double spaces
-            tb = tb.replace('\n  ', '\n')  # remove whitespace after newline
+            clean_tb = self._cleaned_traceback(record)
             db_log = 'EXC {0} | {1[0]} | {1[1]} |{2}'.format(
-                db_log, record.exc_info, tb,
+                db_log,
+                record.exc_info,
+                clean_tb,
             )  # combine everything, start with EXC
 
         self.db.add_log(db_log, db_source, db_level)
+
+    def _cleaned_traceback(self, record: logging.LogRecord) -> str:
+        """Get the traceback and clean it up.
+
+        Get the traceback from the logging record and clean it up:
+            - remove the ' File' at the beginning
+            - replace double spaces with single spaces
+            - replace the '/home/hypermaq/scripts' path with '.'
+            - remove whitespace after a newline
+
+        Args:
+            record (logging.LogRecord): logrecord to extract from
+
+        Returns:
+            str: cleaned up traceback
+        """
+        import traceback
+        import pdb
+        pdb.set_trace()
+        tb = traceback.format_list(
+            traceback.extract_tb(record.exc_info[2]),
+        )  # get the traceback as string
+        print(f'{type(tb)=}, {tb=}')
+        tb = tb[0][7:-1].replace(
+            '/home/hypermaq/scripts',
+            '.',
+        )  # shorten pad + get rid of ' File' and newline at the end
+        tb = tb.replace('  ', ' ')  # remove double spaces
+        tb = tb.replace('\n  ', '\n')  # remove whitespace after newline
+        return tb
