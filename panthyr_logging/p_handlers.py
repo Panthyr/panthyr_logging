@@ -127,7 +127,7 @@ class db_Handler(logging.Handler):
         tb = traceback.format_list(
             traceback.extract_tb(record.exc_info[2]),
         )  # get the traceback as string
-        print(f'{type(tb)=}, {tb=}')
+        print(f'{type(tb)}, {tb}')
         tb = tb[0][7:-1].replace(
             '/home/hypermaq/scripts',
             '.',
