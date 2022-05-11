@@ -129,4 +129,5 @@ def add_database_handler(logger: logging.Logger, db) -> None:
     from .p_handlers import db_Handler
     h3 = db_Handler(db)
     h3.setLevel(logging.DEBUG)
+    h3.setFormatter(MilliSecondsFormatter(LOG_FMT))
     logger.addHandler(h3)
