@@ -87,8 +87,6 @@ def add_email_handler(logger: logging.Logger, db) -> None:
         log (logging.Logger): logger object to add handler to
         db (_type_): Panthyr database
 
-    Returns:
-        logging.Logger: logger with added email handler
     """
     from .p_handlers import buffered_SMTP_Handler
     try:
