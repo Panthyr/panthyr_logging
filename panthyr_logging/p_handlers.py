@@ -118,8 +118,7 @@ class db_Handler(logging.Handler):
             str: cleaned up traceback
         """
         import traceback
-        import pdb
-        pdb.set_trace()
+
         tb = traceback.format_list(
             traceback.extract_tb(record.exc_info[2]),
         )  # get the traceback as string
