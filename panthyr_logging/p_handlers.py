@@ -128,5 +128,5 @@ class db_Handler(logging.Handler):
             '.',
         )  # shorten pad + get rid of ' File' and newline at the end
         tb = tb.replace('  ', ' ')  # remove double spaces
-        tb = tb.replace('\n  ', '\n')  # remove whitespace after newline
+        tb = tb.replace('\n  ', '/\\')  # remove whitespace after newline
         return tb
