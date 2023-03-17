@@ -14,7 +14,7 @@ from typing import Union
 LOG_FMT = '%(asctime)s|%(levelname)-7.7s|%(module)-10.10s|%(lineno)-0.3d|%(funcName)s|%(message)s'
 # See https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes
 DATE_FMT = '%d/%m/%Y %H:%M:%S'
-LOGFILE = '/home/hypermaq/data/logs/panthyr_log.log'
+LOGFILE = '/home/panthyr/data/logs/panthyr_log.log'
 LOGMAXBYTES = 500000
 
 
