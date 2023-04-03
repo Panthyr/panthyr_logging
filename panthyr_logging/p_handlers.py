@@ -65,15 +65,22 @@ class buffered_SMTP_Handler(logging.handlers.BufferingHandler):
 
         connection = smtplib.SMTP(host=self.host, timeout=10)
         connection.starttls()
-        connection.login(self.fromaddress, self.password)
-        connection.sendmail(self.fromaddress, self.toaddress, mailheader + mailbody)
-        if len(criticalbody) > 0:
-            criticalhdr_template = 'From: {}\r\nTo: {}\r\nSubject: CRITICAL PANTHYR LOG\r\n\r\n'
-            criticalhdr = criticalhdr_template.format(self.fromaddress, ','.join(self.toaddress))
-            connection.sendmail(self.fromaddress, self.toaddress, criticalhdr + criticalbody)
-        connection.quit()
-
-        super(buffered_SMTP_Handler, self).flush()
+        try:
+            connection.login(self.fromaddress, self.password)
+        except smtplib.SMTPAuthenticationError:
+            pass
+        else:
+            connection.sendmail(self.fromaddress, self.toaddress, mailheader + mailbody)
+            if len(criticalbody) > 0:
+                criticalhdr_template = 'From: {}\r\nTo: {}\r\nSubject: CRITICAL PANTHYR LOG\r\n\r\n'
+                criticalhdr = criticalhdr_template.format(
+                    self.fromaddress,
+                    ','.join(self.toaddress),
+                )
+                connection.sendmail(self.fromaddress, self.toaddress, criticalhdr + criticalbody)
+            connection.quit()
+        finally:
+            super(buffered_SMTP_Handler, self).flush()
 
 
 class db_Handler(logging.Handler):
