@@ -14,7 +14,7 @@ Example code:
 
     # create database object for next handlers:
     >>> from panthyr_db.p_db import pDB
-    >>> db = pDB('/home/hypermaq/data/hypermaq.db')
+    >>> db = pDB('/home/panthyr/data/panthyr.db')
 
     # add the email handler (after instanciating the panthyr database as db)
     >>> panthyr_logging.p_logging.add_email_handler(log, db)

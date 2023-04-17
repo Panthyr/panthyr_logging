@@ -8,12 +8,13 @@ __project_link__ = 'https://waterhypernet.org/equipment/'
 import logging
 import logging.handlers
 import datetime as dt
+import os
 from typing import Union
 
 LOG_FMT = '%(asctime)s|%(levelname)-7.7s|%(module)-10.10s|%(lineno)-0.3d|%(funcName)s|%(message)s'
 # See https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes
 DATE_FMT = '%d/%m/%Y %H:%M:%S'
-LOGFILE = './panthyr_log.log'
+LOGFILE = '/home/panthyr/data/logs/panthyr_log.log'
 LOGMAXBYTES = 500000
 
 
@@ -65,6 +66,9 @@ def add_rotating_file_handler(logger: logging.Logger) -> None:
     Args:
         logger (logging.Logger): Logger to add the handler to.
     """
+    log_dir = os.path.dirname(LOGFILE)
+    if not os.path.isdir(log_dir):
+        os.makedirs(log_dir)
     rot_file_handler = logging.handlers.RotatingFileHandler(
         LOGFILE,
         maxBytes=LOGMAXBYTES,

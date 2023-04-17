@@ -49,31 +49,37 @@ class buffered_SMTP_Handler(logging.handlers.BufferingHandler):
         if len(self.buffer) == 0:
             return
 
-        mailheader = 'From: {}\r\nTo: {}\r\nSubject: {}\r\n\r\n'.format(
-            self.fromaddress,
-            ','.join(self.toaddress),
-            self.subject,
-        )
+        mailheader: str = f'From: {self.fromaddress}\r\nTo: {", ".join(self.toaddress)}\r\n' \
+                           f'Subject: {self.subject}\r\n\r\n'
         mailbody = ''
         criticalbody = ''
         for log in self.buffer:
-            mailbody += '{}\r\n'.format(
-                self.format(log),
-            )  # keep critical log messages in between others as well
+            mailbody += f'{self.format(log)}\r\n'
             if self.format(log)[:8] == 'CRITICAL':
-                criticalbody += '{}\r\n'.format(self.format(log))
+                criticalbody += f'{self.format(log)}\r\n'
+                criticalbody += '*' * 60
 
         connection = smtplib.SMTP(host=self.host, timeout=10)
         connection.starttls()
-        connection.login(self.fromaddress, self.password)
-        connection.sendmail(self.fromaddress, self.toaddress, mailheader + mailbody)
-        if len(criticalbody) > 0:
-            criticalhdr_template = 'From: {}\r\nTo: {}\r\nSubject: CRITICAL PANTHYR LOG\r\n\r\n'
-            criticalhdr = criticalhdr_template.format(self.fromaddress, ','.join(self.toaddress))
-            connection.sendmail(self.fromaddress, self.toaddress, criticalhdr + criticalbody)
-        connection.quit()
-
-        super(buffered_SMTP_Handler, self).flush()
+        try:
+            connection.login(self.fromaddress, self.password)
+        except smtplib.SMTPAuthenticationError:
+            pass
+        else:
+            connection.sendmail(self.fromaddress, self.toaddress, mailheader + mailbody)
+            if len(criticalbody) > 0:
+                criticalhdr_template = 'From: {}\r\nTo: {}\r\nSubject: CRITICAL PANTHYR LOG\r\n\r\n'
+                criticalhdr = criticalhdr_template.format(
+                    self.fromaddress,
+                    ','.join(self.toaddress),
+                )
+                connection.sendmail(self.fromaddress, self.toaddress, criticalhdr + criticalbody)
+            connection.quit()
+        finally:
+            super(
+                buffered_SMTP_Handler,
+                self,
+            ).flush()  # And do the normal email as default as well
 
 
 class db_Handler(logging.Handler):
@@ -108,7 +114,7 @@ class db_Handler(logging.Handler):
         Get the traceback from the logging record and clean it up:
             - remove the ' File' at the beginning
             - replace double spaces with single spaces
-            - replace the '/home/hypermaq/scripts' path with '.'
+            - replace the '/home/panthyr/repos' path with '.'
             - remove whitespace after a newline
 
         Args:
@@ -123,9 +129,9 @@ class db_Handler(logging.Handler):
         )  # get the traceback as string
         print(f'{type(tb)}, {tb}')
         tb = tb[0][7:-1].replace(
-            '/home/hypermaq/scripts',
+            '/home/panthyr/repos',
             '.',
         )  # shorten pad + get rid of ' File' and newline at the end
         tb = tb.replace('  ', ' ')  # remove double spaces
-        tb = tb.replace('\n  ', '\n')  # remove whitespace after newline
+        tb = tb.replace('\n  ', '/\\')  # remove whitespace after newline
         return tb
