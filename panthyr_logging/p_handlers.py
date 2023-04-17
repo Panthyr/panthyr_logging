@@ -49,19 +49,15 @@ class buffered_SMTP_Handler(logging.handlers.BufferingHandler):
         if len(self.buffer) == 0:
             return
 
-        mailheader = 'From: {}\r\nTo: {}\r\nSubject: {}\r\n\r\n'.format(
-            self.fromaddress,
-            ','.join(self.toaddress),
-            self.subject,
-        )
+        mailheader: str = f'From: {self.fromaddress}\r\nTo: {", ".join(self.toaddress)}\r\n' \
+                           f'Subject: {self.subject}\r\n\r\n'
         mailbody = ''
         criticalbody = ''
         for log in self.buffer:
-            mailbody += '{}\r\n'.format(
-                self.format(log),
-            )  # keep critical log messages in between others as well
+            mailbody += f'{self.format(log)}\r\n'
             if self.format(log)[:8] == 'CRITICAL':
-                criticalbody += '{}\r\n'.format(self.format(log))
+                criticalbody += f'{self.format(log)}\r\n'
+                criticalbody += '*' * 60
 
         connection = smtplib.SMTP(host=self.host, timeout=10)
         connection.starttls()
@@ -80,7 +76,10 @@ class buffered_SMTP_Handler(logging.handlers.BufferingHandler):
                 connection.sendmail(self.fromaddress, self.toaddress, criticalhdr + criticalbody)
             connection.quit()
         finally:
-            super(buffered_SMTP_Handler, self).flush()
+            super(
+                buffered_SMTP_Handler,
+                self,
+            ).flush()  # And do the normal email as default as well
 
 
 class db_Handler(logging.Handler):
