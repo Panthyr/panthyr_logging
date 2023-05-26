@@ -31,7 +31,6 @@ class buffered_SMTP_Handler(logging.handlers.BufferingHandler):
             toaddress (str): recipient address
             station_id (str): identifier for the Panthyr station, used in header
         """
-        self.log: logging.Logger = logging.getLogger(__name__)
         logging.handlers.BufferingHandler.__init__(self, 50)
         self.host = host
         self.port = 587
@@ -63,7 +62,7 @@ class buffered_SMTP_Handler(logging.handlers.BufferingHandler):
         try:
             connection = smtplib.SMTP(host=self.host, timeout=10)
         except socket.gaierror as e:
-            self.log.error(f'Could not resolve name: {e}')
+            print(f'ERROR: Could not resolve name: {e}')
             # TODO: empty log handler buffer? Flush?
             return
 
