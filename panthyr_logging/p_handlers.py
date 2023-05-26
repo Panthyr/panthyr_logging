@@ -9,6 +9,7 @@ __project_link__ = 'https://waterhypernet.org/equipment/'
 import logging
 import logging.handlers
 import smtplib
+import socket
 
 
 class buffered_SMTP_Handler(logging.handlers.BufferingHandler):
@@ -30,6 +31,7 @@ class buffered_SMTP_Handler(logging.handlers.BufferingHandler):
             toaddress (str): recipient address
             station_id (str): identifier for the Panthyr station, used in header
         """
+        self.log: logging.Logger = logging.getLogger(__name__)
         logging.handlers.BufferingHandler.__init__(self, 50)
         self.host = host
         self.port = 587
@@ -58,9 +60,15 @@ class buffered_SMTP_Handler(logging.handlers.BufferingHandler):
             if self.format(log)[:8] == 'CRITICAL':
                 criticalbody += f'{self.format(log)}\r\n'
                 criticalbody += '*' * 60
+        try:
+            connection = smtplib.SMTP(host=self.host, timeout=10)
+        except socket.gaierror as e:
+            self.log.error(f'Could not resolve name: {e}')
+            # TODO: empty log handler buffer? Flush?
+            return
 
-        connection = smtplib.SMTP(host=self.host, timeout=10)
         connection.starttls()
+
         try:
             connection.login(self.fromaddress, self.password)
         except smtplib.SMTPAuthenticationError:
