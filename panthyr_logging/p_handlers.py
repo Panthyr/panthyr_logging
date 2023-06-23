@@ -54,9 +54,9 @@ class buffered_SMTP_Handler(logging.handlers.BufferingHandler):
                            f'Subject: {self.subject}\r\n\r\n'
         mailbody = ''
         for log in self.buffer:
-            mailbody += '*' * 40 + '\r\n'
+            mailbody += f'\r\n{"*" * 40}\r\n'
             log_str = self.format(log)
-            log_str = '\r\n'.join([line for line in log_str.split('\r\n') if line != ''])
+            log_str = '\r\n|'.join([line for line in log_str.split('\n')])
             mailbody += f'{log_str}\r\n'
 
         try:
