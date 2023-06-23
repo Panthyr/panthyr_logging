@@ -53,12 +53,12 @@ class buffered_SMTP_Handler(logging.handlers.BufferingHandler):
         mailheader: str = f'From: {self.fromaddress}\r\nTo: {", ".join(self.toaddress)}\r\n' \
                            f'Subject: {self.subject}\r\n\r\n'
         mailbody = ''
-        criticalbody = ''
         for log in self.buffer:
-            mailbody += f'{self.format(log)}\r\n'
-            if self.format(log)[:8] == 'CRITICAL':
-                criticalbody += f'{self.format(log)}\r\n'
-                criticalbody += '*' * 60
+            mailbody += '*' * 40
+            log_str = self.format(log)
+            log_str = '\r\n'.join([line for line in log_str.split('\r\n') if line != ''])
+            mailbody += f'{log_str}\r\n'
+
         try:
             connection = smtplib.SMTP(host=self.host, timeout=10)
         except socket.gaierror as e:
@@ -74,13 +74,6 @@ class buffered_SMTP_Handler(logging.handlers.BufferingHandler):
             pass
         else:
             connection.sendmail(self.fromaddress, self.toaddress, mailheader + mailbody)
-            if len(criticalbody) > 0:
-                criticalhdr_template = 'From: {}\r\nTo: {}\r\nSubject: CRITICAL PANTHYR LOG\r\n\r\n'
-                criticalhdr = criticalhdr_template.format(
-                    self.fromaddress,
-                    ','.join(self.toaddress),
-                )
-                connection.sendmail(self.fromaddress, self.toaddress, criticalhdr + criticalbody)
             connection.quit()
         finally:
             super(
@@ -134,7 +127,6 @@ class db_Handler(logging.Handler):
         tb = traceback.format_list(
             traceback.extract_tb(record.exc_info[2]),
         )  # get the traceback as string
-        print(f'{type(tb)}, {tb}')
         tb = tb[0][7:-1].replace(
             '/home/panthyr/repos',
             '.',
