@@ -39,7 +39,7 @@ class buffered_SMTP_Handler(logging.handlers.BufferingHandler):
         self.toaddress = (toaddress.replace(' ', '').replace(';', ',')).split(',')
         self.station_id = station_id
         # strip spaces from toaddress, then put different recipients in list
-        self.subject = f'[{self.station_id.upper()}] Error log send by PANTHYR'
+        self.subject = f'[{self.station_id.upper()}] Error log sent by PANTHYR'
 
     def flush(self) -> None:
         """Send email with log messages.
