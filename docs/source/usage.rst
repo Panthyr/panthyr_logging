@@ -16,7 +16,7 @@ Example code:
     >>> from panthyr_db.p_db import pDB
     >>> db = pDB('/home/panthyr/data/panthyr.db')
 
-    # add the email handler (after instanciating the panthyr database as db)
+    # add the email handler (after instantiating the panthyr database as db)
     >>> panthyr_logging.p_logging.add_email_handler(log, db)
     # add the database handler (after instanciating the panthyr database as db)
     >>> panthyr_logging.p_logging.add_database_handler(log, db)
