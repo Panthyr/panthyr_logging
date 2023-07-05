@@ -54,9 +54,9 @@ class buffered_SMTP_Handler(logging.handlers.BufferingHandler):
                            f'Subject: {self.subject}\r\n\r\n'
         mailbody = ''
         for log in self.buffer:
-            mailbody += f'\r\n{"*" * 40}\r\n'
+            mailbody += '*' * 40 + '\r\n'
             log_str = self.format(log)
-            log_str = '\r\n|'.join([line for line in log_str.split('\n')])
+            log_str = '\r\n'.join([line for line in log_str.split('\r\n') if line != ''])
             mailbody += f'{log_str}\r\n'
 
         try:
@@ -132,5 +132,5 @@ class db_Handler(logging.Handler):
             '.',
         )  # shorten pad + get rid of ' File' and newline at the end
         tb = tb.replace('  ', ' ')  # remove double spaces
-        tb = tb.replace('\n  ', '/\\')  # remove whitespace after newline
+        tb = tb.replace('\n  ', '\n')  # remove whitespace after newline
         return tb
