@@ -27,7 +27,7 @@ class MilliSecondsFormatter(logging.Formatter):
             s = creation_time.strftime(datefmt)
         else:
             t = creation_time.strftime(DATE_FMT)
-            s = f'{t}.{int(record.msecs)}'
+            s = f'{t}.{int(record.msecs):03.0f}'
         return s
 
 

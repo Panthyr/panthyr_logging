@@ -5,3 +5,7 @@
 - Handle crash when no internet connection is available when attempting to send email
 - Remove critical mail (was not used)
 - Improved formatting of email
+
+## Done
+
+- Always display milliseconds with three digits.
