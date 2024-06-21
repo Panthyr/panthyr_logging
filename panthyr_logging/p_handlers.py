@@ -68,7 +68,7 @@ class buffered_SMTP_Handler(logging.handlers.BufferingHandler):
             server=self.server,
             username=self.fromaddress,
             password=self.password,
-            port=self.port,
+            port=int(self.port),
         )
 
         mail.create_email(
