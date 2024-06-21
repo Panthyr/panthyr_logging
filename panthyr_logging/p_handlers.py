@@ -34,7 +34,7 @@ class buffered_SMTP_Handler(logging.handlers.BufferingHandler):
             station_id (str): identifier for the Panthyr station, used in header
         """
         logging.handlers.BufferingHandler.__init__(self, 1)
-        self.server, self.password = host.split(':')
+        self.server, self.port = host.split(':')
         self.password = password
         self.fromaddress = fromaddress
         self.toaddress = (toaddress.replace(' ', '').replace(';', ',')).split(',')
