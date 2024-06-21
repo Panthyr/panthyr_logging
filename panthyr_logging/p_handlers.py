@@ -70,10 +70,11 @@ class buffered_SMTP_Handler(logging.handlers.BufferingHandler):
             password=self.password,
             port=int(self.port),
         )
-
+        print(f'{mailbody=}')
         mail.create_email(
             to=self.toaddress,
-            subject=mailheader,
+            subject='subject',
+            # subject=mailheader,
             text=mailbody,
             station_id=self.station_id,
         )
