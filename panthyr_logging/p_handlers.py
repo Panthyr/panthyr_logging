@@ -74,7 +74,7 @@ class buffered_SMTP_Handler(logging.handlers.BufferingHandler):
         mail.create_email(
             to=self.toaddress,
             subject='subject',
-            text=mailbody,
+            text=str(mailbody),
             station_id=self.station_id,
         )
         # subject=mailheader,
