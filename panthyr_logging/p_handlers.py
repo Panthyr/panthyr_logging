@@ -64,6 +64,8 @@ class buffered_SMTP_Handler(logging.handlers.BufferingHandler):
             )
             mailbody += f'{log_str}\r\n'
 
+        mailbody = 'test email body'
+
         mail = pEmail(
             server=self.server,
             username=self.fromaddress,
