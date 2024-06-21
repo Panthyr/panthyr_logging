@@ -8,12 +8,14 @@ __project_link__ = 'https://waterhypernet.org/equipment/'
 
 import logging
 import logging.handlers
-import smtplib
-import socket
+
+try:
+    from panthyr_email.p_email import pEmail
+except ImportError:
+    pEmail = None
 
 
 class buffered_SMTP_Handler(logging.handlers.BufferingHandler):
-
     def __init__(
         self,
         host: str,
@@ -31,9 +33,8 @@ class buffered_SMTP_Handler(logging.handlers.BufferingHandler):
             toaddress (str): recipient address
             station_id (str): identifier for the Panthyr station, used in header
         """
-        logging.handlers.BufferingHandler.__init__(self, 50)
-        self.host = host
-        self.port = 587
+        logging.handlers.BufferingHandler.__init__(self, 1)
+        self.server, self.password = host.split(':')
         self.password = password
         self.fromaddress = fromaddress
         self.toaddress = (toaddress.replace(' ', '').replace(';', ',')).split(',')
@@ -47,43 +48,65 @@ class buffered_SMTP_Handler(logging.handlers.BufferingHandler):
         Get all CRITICAL logs from the logging buffer and add them to the email body.
         Send the email to recipient.
         """
-        if len(self.buffer) == 0:
+        if len(self.buffer) == 0 or not pEmail:
             return
 
-        mailheader: str = f'From: {self.fromaddress}\r\nTo: {", ".join(self.toaddress)}\r\n' \
-                           f'Subject: {self.subject}\r\n\r\n'
+        mailheader: str = (
+            f'From: {self.fromaddress}\r\nTo: {", ".join(self.toaddress)}\r\n'
+            f'Subject: {self.subject}\r\n\r\n'
+        )
         mailbody = ''
         for log in self.buffer:
             mailbody += '*' * 40 + '\r\n'
             log_str = self.format(log)
-            log_str = '\r\n'.join([line for line in log_str.split('\r\n') if line != ''])
+            log_str = '\r\n'.join(
+                [line for line in log_str.split('\r\n') if line != ''],
+            )
             mailbody += f'{log_str}\r\n'
 
-        try:
-            connection = smtplib.SMTP(host=self.host, timeout=10)
-        except socket.gaierror as e:
-            print(f'ERROR: Could not resolve name: {e}')
-            # TODO: empty log handler buffer? Flush?
-            return
+        mail = pEmail(
+            server=self.server,
+            username=self.fromaddress,
+            password=self.password,
+            port=self.port,
+        )
 
-        connection.starttls()
+        mail.create_email(
+            to=self.toaddress,
+            subject=mailheader,
+            text=mailbody,
+            station_id=self.station_id,
+        )
+        mail.send()
 
-        try:
-            connection.login(self.fromaddress, self.password)
-        except smtplib.SMTPAuthenticationError:
-            pass
-        else:
-            connection.sendmail(self.fromaddress, self.toaddress, mailheader + mailbody)
-            connection.quit()
-        finally:
-            super(
-                buffered_SMTP_Handler,
-                self,
-            ).flush()  # And do the normal email as default as well
+        # try:
+        #     connection = smtplib.SMTP(host=self.host, timeout=10)
+        # except socket.gaierror as e:
+        #     print(f"ERROR: Could not resolve name: {e}")
+        #     # TODO: empty log handler buffer? Flush?
+        #     return
+
+        # connection.starttls()
+
+        # try:
+        #     connection.login(self.fromaddress, self.password)
+        # except smtplib.SMTPAuthenticationError:
+        #     pass
+        # else:
+        #     connection.sendmail(self.fromaddress, self.toaddress, mailheader + mailbody)
+        #     connection.quit()
+        # finally:
+        #     super(
+        #         buffered_SMTP_Handler,
+        #         self,
+        #     ).flush()  # And do the normal email as default as well
+        super(
+            buffered_SMTP_Handler,
+            self,
+        ).flush()  # And do the normal email as default as well
 
 
 class db_Handler(logging.Handler):
-
     def __init__(self, db):
         """Add a handler to add logs to the database.
 
@@ -102,7 +125,9 @@ class db_Handler(logging.Handler):
         db_level = record.levelname  # log level
         db_source = f'{record.module}.{record.funcName}({record.lineno})'
         db_log = record.msg  # the log text
-        if record.exc_info:  # an exception was thrown, log additional data such as traceback
+        if (
+            record.exc_info
+        ):  # an exception was thrown, log additional data such as traceback
             clean_tb = self._cleaned_traceback(record)
             db_log = f'EXCEPTION:{db_log}, TYPE/VALUE:{record.exc_info[1]}, TRACEBACK:{clean_tb}'
 
@@ -124,6 +149,7 @@ class db_Handler(logging.Handler):
             str: cleaned up traceback
         """
         import traceback
+
         tb = traceback.format_list(
             traceback.extract_tb(record.exc_info[2]),
         )  # get the traceback as string
