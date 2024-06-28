@@ -33,14 +33,13 @@ class buffered_SMTP_Handler(logging.handlers.BufferingHandler):
             toaddress (str): recipient address
             station_id (str): identifier for the Panthyr station, used in header
         """
-        logging.handlers.BufferingHandler.__init__(self, 1)
+        logging.handlers.BufferingHandler.__init__(self, 50)
         self.server, self.port = host.split(':')
         self.password = password
         self.fromaddress = fromaddress
-        self.toaddress = (toaddress.replace(' ', '').replace(';', ',')).split(',')
+        self.toaddress = (toaddress.replace(' ', '').replace(';', ','))
         self.station_id = station_id
-        # strip spaces from toaddress, then put different recipients in list
-        self.subject = f'[{self.station_id.upper()}] Error log sent by PANTHYR'
+        self.subject = f'Error log from {self.station_id}'
 
     def flush(self) -> None:
         """Send email with log messages.
@@ -51,10 +50,6 @@ class buffered_SMTP_Handler(logging.handlers.BufferingHandler):
         if len(self.buffer) == 0 or not pEmail:
             return
 
-        mailheader: str = (
-            f'From: {self.fromaddress}\r\nTo: {", ".join(self.toaddress)}\r\n'
-            f'Subject: {self.subject}\r\n\r\n'
-        )
         mailbody = ''
         for log in self.buffer:
             mailbody += '*' * 40 + '\r\n'
@@ -64,7 +59,6 @@ class buffered_SMTP_Handler(logging.handlers.BufferingHandler):
             )
             mailbody += f'{log_str}\r\n'
 
-        mailbody = 'test email body'
 
         mail = pEmail(
             server=self.server,
@@ -72,37 +66,14 @@ class buffered_SMTP_Handler(logging.handlers.BufferingHandler):
             password=self.password,
             port=int(self.port),
         )
-        print(f'mail body: {mailbody}')
         mail.create_email(
             to=self.toaddress,
-            subject='subject',
-            text=str(mailbody),
+            subject=self.subject,
+            text=mailbody,
             station_id=self.station_id,
         )
-        # subject=mailheader,
         mail.send()
 
-        # try:
-        #     connection = smtplib.SMTP(host=self.host, timeout=10)
-        # except socket.gaierror as e:
-        #     print(f"ERROR: Could not resolve name: {e}")
-        #     # TODO: empty log handler buffer? Flush?
-        #     return
-
-        # connection.starttls()
-
-        # try:
-        #     connection.login(self.fromaddress, self.password)
-        # except smtplib.SMTPAuthenticationError:
-        #     pass
-        # else:
-        #     connection.sendmail(self.fromaddress, self.toaddress, mailheader + mailbody)
-        #     connection.quit()
-        # finally:
-        #     super(
-        #         buffered_SMTP_Handler,
-        #         self,
-        #     ).flush()  # And do the normal email as default as well
         super(
             buffered_SMTP_Handler,
             self,
