@@ -5,9 +5,9 @@ __author__ = 'Dieter Vansteenwegen'
 __email__ = 'dieter.vansteenwegen@vliz.be'
 __project__ = 'Panthyr'
 __project_link__ = 'https://waterhypernet.org/equipment/'
+import datetime as dt
 import logging
 import logging.handlers
-import datetime as dt
 import os
 from typing import Union
 
@@ -19,10 +19,9 @@ LOGMAXBYTES = 500000
 
 
 class MilliSecondsFormatter(logging.Formatter):
-
-    def formatTime(self, record: logging.LogRecord, datefmt: Union[str, None] = None) -> str:
+    def formatTime(self, record: logging.LogRecord, datefmt: Union[str, None] = None) -> str:  # noqa: N802
         # sourcery skip: lift-return-into-if, remove-unnecessary-else
-        creation_time = dt.datetime.fromtimestamp(record.created)
+        creation_time = dt.datetime.fromtimestamp(record.created)  # noqa: DTZ006
         if datefmt:
             s = creation_time.strftime(datefmt)
         else:
@@ -66,9 +65,9 @@ def add_rotating_file_handler(logger: logging.Logger) -> None:
     Args:
         logger (logging.Logger): Logger to add the handler to.
     """
-    log_dir = os.path.dirname(LOGFILE)
-    if not os.path.isdir(log_dir):
-        os.makedirs(log_dir)
+    log_dir = os.path.dirname(LOGFILE)  # noqa: PTH120
+    if not os.path.isdir(log_dir):  # noqa: PTH112
+        os.makedirs(log_dir)  # noqa: PTH103
     rot_file_handler = logging.handlers.RotatingFileHandler(
         LOGFILE,
         maxBytes=LOGMAXBYTES,
@@ -93,8 +92,10 @@ def add_email_handler(logger: logging.Logger, db) -> None:
 
     """
     from .p_handlers import buffered_SMTP_Handler
+
     try:
         from panthyr_credentials.p_credentials import pCredentials
+
         cred = pCredentials()
         server_port = cred.get_cred('email_server_port')
         user = cred.get_cred('email_user')
@@ -131,6 +132,7 @@ def add_database_handler(logger: logging.Logger, db) -> None:
         logging.Logger: logger with added email handler
     """
     from .p_handlers import db_Handler
+
     h3 = db_Handler(db)
     h3.setLevel(logging.DEBUG)
     h3.setFormatter(MilliSecondsFormatter(LOG_FMT))

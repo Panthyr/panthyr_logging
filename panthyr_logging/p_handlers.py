@@ -12,10 +12,10 @@ import logging.handlers
 try:
     from panthyr_email.p_email import pEmail
 except ImportError:
-    pEmail = None
+    pEmail = None  # noqa: N816
 
 
-class buffered_SMTP_Handler(logging.handlers.BufferingHandler):
+class buffered_SMTP_Handler(logging.handlers.BufferingHandler):  # noqa: N801
     def __init__(
         self,
         host: str,
@@ -59,7 +59,6 @@ class buffered_SMTP_Handler(logging.handlers.BufferingHandler):
             )
             mailbody += f'{log_str}\r\n'
 
-
         mail = pEmail(
             server=self.server,
             username=self.fromaddress,
@@ -80,7 +79,7 @@ class buffered_SMTP_Handler(logging.handlers.BufferingHandler):
         ).flush()  # And do the normal email as default as well
 
 
-class db_Handler(logging.Handler):
+class db_Handler(logging.Handler):  # noqa: N801
     def __init__(self, db):
         """Add a handler to add logs to the database.
 
@@ -99,9 +98,7 @@ class db_Handler(logging.Handler):
         db_level = record.levelname  # log level
         db_source = f'{record.module}.{record.funcName}({record.lineno})'
         db_log = record.msg  # the log text
-        if (
-            record.exc_info
-        ):  # an exception was thrown, log additional data such as traceback
+        if record.exc_info:  # an exception was thrown, log additional data such as traceback
             clean_tb = self._cleaned_traceback(record)
             db_log = f'EXCEPTION:{db_log}, TYPE/VALUE:{record.exc_info[1]}, TRACEBACK:{clean_tb}'
 
