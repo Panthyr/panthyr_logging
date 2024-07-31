@@ -6,6 +6,8 @@
 - Remove critical mail (was not used)
 - Improved formatting of email
 
-## Done
+## v1.2.0 (31/07/2024)
 
-- Always display milliseconds with three digits.
+- Fix BufferedEmailHandler to work with new email accounts.
+- Update packaging to use pyproject.toml instead of setup.py
+- Update precommit hooks

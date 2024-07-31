@@ -8,12 +8,14 @@ __project_link__ = 'https://waterhypernet.org/equipment/'
 
 import logging
 import logging.handlers
-import smtplib
-import socket
+
+try:
+    from panthyr_email.p_email import pEmail
+except ImportError:
+    pEmail = None  # noqa: N816
 
 
-class buffered_SMTP_Handler(logging.handlers.BufferingHandler):
-
+class buffered_SMTP_Handler(logging.handlers.BufferingHandler):  # noqa: N801
     def __init__(
         self,
         host: str,
@@ -32,58 +34,52 @@ class buffered_SMTP_Handler(logging.handlers.BufferingHandler):
             station_id (str): identifier for the Panthyr station, used in header
         """
         logging.handlers.BufferingHandler.__init__(self, 50)
-        self.host = host
-        self.port = 587
+        self.server, self.port = host.split(':')
         self.password = password
         self.fromaddress = fromaddress
-        self.toaddress = (toaddress.replace(' ', '').replace(';', ',')).split(',')
+        self.toaddress = toaddress.replace(' ', '').replace(';', ',')
         self.station_id = station_id
-        # strip spaces from toaddress, then put different recipients in list
-        self.subject = f'[{self.station_id.upper()}] Error log sent by PANTHYR'
+        self.subject = f'Error log from {self.station_id}'
 
     def flush(self) -> None:
         """Send email with log messages.
 
-        Get all CRITICAL logs from the logging buffer and add them to the email body.
+        Get logs from the logging buffer and add them to the email body.
         Send the email to recipient.
         """
-        if len(self.buffer) == 0:
+        if len(self.buffer) == 0 or not pEmail:
             return
 
-        mailheader: str = f'From: {self.fromaddress}\r\nTo: {", ".join(self.toaddress)}\r\n' \
-                           f'Subject: {self.subject}\r\n\r\n'
         mailbody = ''
         for log in self.buffer:
             mailbody += '*' * 40 + '\r\n'
             log_str = self.format(log)
-            log_str = '\r\n'.join([line for line in log_str.split('\r\n') if line != ''])
+            log_str = '\r\n'.join(
+                [line for line in log_str.split('\r\n') if line != ''],
+            )
             mailbody += f'{log_str}\r\n'
 
-        try:
-            connection = smtplib.SMTP(host=self.host, timeout=10)
-        except socket.gaierror as e:
-            print(f'ERROR: Could not resolve name: {e}')
-            # TODO: empty log handler buffer? Flush?
-            return
+        mail = pEmail(
+            server=self.server,
+            username=self.fromaddress,
+            password=self.password,
+            port=int(self.port),
+        )
+        mail.create_email(
+            to=self.toaddress,
+            subject=self.subject,
+            text=mailbody,
+            station_id=self.station_id,
+        )
+        mail.send()
 
-        connection.starttls()
-
-        try:
-            connection.login(self.fromaddress, self.password)
-        except smtplib.SMTPAuthenticationError:
-            pass
-        else:
-            connection.sendmail(self.fromaddress, self.toaddress, mailheader + mailbody)
-            connection.quit()
-        finally:
-            super(
-                buffered_SMTP_Handler,
-                self,
-            ).flush()  # And do the normal email as default as well
+        super(
+            buffered_SMTP_Handler,
+            self,
+        ).flush()  # And do the normal email as default as well
 
 
-class db_Handler(logging.Handler):
-
+class db_Handler(logging.Handler):  # noqa: N801
     def __init__(self, db):
         """Add a handler to add logs to the database.
 
@@ -124,6 +120,7 @@ class db_Handler(logging.Handler):
             str: cleaned up traceback
         """
         import traceback
+
         tb = traceback.format_list(
             traceback.extract_tb(record.exc_info[2]),
         )  # get the traceback as string
