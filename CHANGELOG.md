@@ -6,7 +6,7 @@
 - Remove critical mail (was not used)
 - Improved formatting of email
 
-## v1.2.0
+## v1.2.0 (31/07/2024)
 
 - Fix BufferedEmailHandler to work with new email accounts.
 - Update packaging to use pyproject.toml instead of setup.py
